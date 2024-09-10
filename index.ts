@@ -171,16 +171,17 @@ class Player {
   }
 }
 
-class Raycaster {
-  public camera: Record<'position' | 'direction', Vector2>
-  constructor() {
-    this.camera = { position: Vector2.zero(), direction: Vector2.zero() }
-  }
+class CameraPlane {
+  public position: Vector2 = Vector2.zero()
+  public direction: Vector2 = Vector2.zero()
+  constructor() {}
 
   update(player: Player) {
-    this.camera.direction = new Vector2(-player.direction.x, player.direction.y)
-    this.camera.position = new Vector2(player.position.x, player.position.y)
-    throw new Error('Contine here, the camera plane is not perpendicular to the player direction')
+    this.direction = new Vector2(-player.direction.y, player.direction.x).normalize().div(2)
+    this.position = new Vector2(
+      player.position.x + player.direction.x,
+      player.position.y + player.direction.y
+    )
   }
 }
 
@@ -287,13 +288,20 @@ function renderPlayer(ctx: CanvasRenderingContext2D, player: Player): void {
   ctx.stroke()
 }
 
-function renderRaycaster(ctx: CanvasRenderingContext2D, raycaster: Raycaster) {
+function renderCameraPlane(ctx: CanvasRenderingContext2D, cameraPlane: CameraPlane) {
   ctx.beginPath()
-  ctx.fillStyle = "pink"
-  ctx.moveTo(raycaster.camera.position.x, raycaster.camera.position.y)
+  ctx.strokeStyle = "pink"
+  ctx.moveTo(
+    cameraPlane.position.x,
+    cameraPlane.position.y 
+  )
   ctx.lineTo(
-    raycaster.camera.position.x + raycaster.camera.direction.x,
-    raycaster.camera.position.y + raycaster.camera.direction.y
+    cameraPlane.position.x + cameraPlane.direction.x,
+    cameraPlane.position.y + cameraPlane.direction.y
+  )
+  ctx.lineTo(
+    cameraPlane.position.x - cameraPlane.direction.x,
+    cameraPlane.position.y - cameraPlane.direction.y
   )
   ctx.stroke()
 }
@@ -324,7 +332,7 @@ function clearCanvas(ctx: CanvasRenderingContext2D, gameSize: Vector2):void {
   ctx.clearRect(0, 0, gameSize.x, gameSize.y)
 }
 
-function gameLoop(ctx: CanvasRenderingContext2D, gameSize: Vector2, input: Input, level: Level, player: Player, raycaster: Raycaster): void {
+function gameLoop(ctx: CanvasRenderingContext2D, gameSize: Vector2, input: Input, level: Level, player: Player, cameraPlane: CameraPlane): void {
   let prevTimestamp = Date.now()
 
   function gameInner() {
@@ -333,14 +341,14 @@ function gameLoop(ctx: CanvasRenderingContext2D, gameSize: Vector2, input: Input
     prevTimestamp = now
 
     player.update(input)
-    raycaster.update(player)
+    cameraPlane.update(player)
 
     // render
     clearCanvas(ctx, gameSize)
     renderGrid(ctx, gameSize)
     renderLevel(ctx, gameSize, level)
     renderPlayer(ctx, player)
-    renderRaycaster(ctx, raycaster)
+    renderCameraPlane(ctx, cameraPlane)
 
     requestAnimationFrame(gameInner)
   }
@@ -356,13 +364,13 @@ function main() {
 
   const level = new Level(map, GAME_SIZE_ROWS, GAME_SIZE_COLS)
   const player = new Player(gameSize, new Vector2(5.5, 6.5), new Vector2(0, -1), Vector2.zero())
-  const raycaster = new Raycaster()
+  const cameraPlane = new CameraPlane()
   const input: Input = { left: false, right: false, up: false, down: false }
 
   window.addEventListener('keydown', (e) => handleInput(e, input))
   window.addEventListener('keyup',   (e) => handleInput(e, input))
 
-  gameLoop(ctx, gameSize, input, level, player, raycaster)
+  gameLoop(ctx, gameSize, input, level, player, cameraPlane)
 }
 
 main()
