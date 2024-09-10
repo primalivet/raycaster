@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "node",
+    "target": "es2015",
+    "sourceMap": true,
+    "strict": true
+  }
+}
