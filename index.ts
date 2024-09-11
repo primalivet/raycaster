@@ -372,7 +372,7 @@ function main() {
   const ctx = setupCanvas(canvasSize, gameSize)
 
   const player = new Player(level, new Vector2(2.5, 6.5), new Vector2(0, -1), Vector2.zero())
-  const cameraPlane = new CameraPlane(90)
+  const cameraPlane = new CameraPlane()
   const input: Input = { left: false, right: false, up: false, down: false }
 
   window.addEventListener('keydown', (e) => handleInput(e, input))
