@@ -145,7 +145,7 @@ class Vector2 {
 
 class Player {
   constructor(
-    private readonly gameSize: Vector2,
+    private readonly level: Level,
     public position: Vector2,
     public direction: Vector2,
     public velocity: Vector2
@@ -166,30 +166,42 @@ class Player {
     if (input.left)  this.velocity.x  -= PLAYER_SPEED;
     if (input.right) this.velocity.x  += PLAYER_SPEED;
 
-    this.position = this.position.add(this.velocity).clamp(0, this.gameSize.x, 0, this.gameSize.y)
+    this.position = this.position.add(this.velocity).clamp(0, this.level.width, 0, this.level.height)
     this.velocity = Vector2.zero()
   }
 }
 
 class CameraPlane {
-  public position: Vector2 = Vector2.zero()
-  public direction: Vector2 = Vector2.zero()
+  private direction: Vector2 = Vector2.zero()
+  public center: Vector2 = Vector2.zero()
+  public left: Vector2 = Vector2.zero()
+  public right: Vector2 = Vector2.zero()
+  
   constructor() {}
 
   update(player: Player) {
     this.direction = new Vector2(-player.direction.y, player.direction.x).normalize().div(2)
-    this.position = new Vector2(
+    this.center = new Vector2(
       player.position.x + player.direction.x,
       player.position.y + player.direction.y
     )
+    this.left = new Vector2(
+      this.center.x - (this.direction.x ),
+      this.center.y - (this.direction.y )
+    )
+    this.right = new Vector2(
+      this.center.x + (this.direction.x ),
+      this.center.y + (this.direction.y )
+    )
+
   }
 }
 
 class Level {
   constructor(
     private map: Array<Array<string | null>>, 
-    private width: number, 
-    private height: number
+    public readonly width: number, 
+    public readonly height: number
   ) {
     if (map.length !== this.height) throw new Error('INVALID_MAP_HEIGHT')
     if (map.every((col) => col.length !== this.width)) throw new Error('INVALID_MAP_WIDTH')
@@ -291,19 +303,14 @@ function renderPlayer(ctx: CanvasRenderingContext2D, player: Player): void {
 function renderCameraPlane(ctx: CanvasRenderingContext2D, cameraPlane: CameraPlane) {
   ctx.beginPath()
   ctx.strokeStyle = "pink"
-  ctx.moveTo(
-    cameraPlane.position.x,
-    cameraPlane.position.y 
-  )
-  ctx.lineTo(
-    cameraPlane.position.x + cameraPlane.direction.x,
-    cameraPlane.position.y + cameraPlane.direction.y
-  )
-  ctx.lineTo(
-    cameraPlane.position.x - cameraPlane.direction.x,
-    cameraPlane.position.y - cameraPlane.direction.y
-  )
+  ctx.moveTo(cameraPlane.left.x, cameraPlane.left.y)
+  ctx.lineTo(cameraPlane.right.x, cameraPlane.right.y)
   ctx.stroke()
+}
+
+function renderRay(ctx: CanvasRenderingContext2D, level: Level, player: Player) {
+
+
 }
 
 
@@ -349,6 +356,7 @@ function gameLoop(ctx: CanvasRenderingContext2D, gameSize: Vector2, input: Input
     renderLevel(ctx, gameSize, level)
     renderPlayer(ctx, player)
     renderCameraPlane(ctx, cameraPlane)
+    renderRay(ctx, level, player)
 
     requestAnimationFrame(gameInner)
   }
@@ -360,11 +368,11 @@ function gameLoop(ctx: CanvasRenderingContext2D, gameSize: Vector2, input: Input
 function main() {
   const canvasSize = new Vector2(RESOLUTION_WIDTH, RESOLUTION_HEIGHT)
   const gameSize =  new Vector2(GAME_SIZE_ROWS, GAME_SIZE_COLS)
+  const level = new Level(map, GAME_SIZE_ROWS, GAME_SIZE_COLS)
   const ctx = setupCanvas(canvasSize, gameSize)
 
-  const level = new Level(map, GAME_SIZE_ROWS, GAME_SIZE_COLS)
-  const player = new Player(gameSize, new Vector2(5.5, 6.5), new Vector2(0, -1), Vector2.zero())
-  const cameraPlane = new CameraPlane()
+  const player = new Player(level, new Vector2(2.5, 6.5), new Vector2(0, -1), Vector2.zero())
+  const cameraPlane = new CameraPlane(90)
   const input: Input = { left: false, right: false, up: false, down: false }
 
   window.addEventListener('keydown', (e) => handleInput(e, input))
