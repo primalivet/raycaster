@@ -60,6 +60,10 @@ class Vector2 {
     return new Vector2(this.x / scalar, this.y / scalar)
   }
 
+  map(f: (x: number) => number) {
+    return new Vector2(f(this.x), f(this.y))
+  }
+
   /**
    * Calculates the magnitude (length) of this Vector2 instance
    *
@@ -309,8 +313,26 @@ function renderCameraPlane(ctx: CanvasRenderingContext2D, cameraPlane: CameraPla
 }
 
 function renderRay(ctx: CanvasRenderingContext2D, level: Level, player: Player) {
+  const points = [player.position.add(player.direction)]
 
+  for (let i = 0; i <= Math.max(level.width, level.height); i++) {
+    points.push(
+      player.position.add(player.direction.mult(i))
+    )
+  }
 
+  for (let i = 1; i < points.length; i++) {
+    ctx.beginPath()
+    ctx.strokeStyle = 'blue'
+    ctx.lineWidth = 0.01
+    ctx.moveTo(points[i-1].x, points[i-1].y)
+    ctx.lineTo(points[i].x, points[i].y)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.fillStyle = 'blue'
+    ctx.arc(points[i].x, points[i].y, 0.1, 0, 360)
+    ctx.fill()
+  }
 }
 
 
